@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
-project(YourProjectName VERSION 1.0)
+project(DiplomaProject VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 find_package(Threads REQUIRED)
 
@@ -21,5 +22,6 @@ ExternalProject_Add(
 
 
 include_directories(${CMAKE_BINARY_DIR}/external/ImGui/include)
-add_executable(DiplomaProject src/main.cc)
+file(GLOB SOURCES "src/*.cc"  "src/*.h")
+add_executable(DiplomaProject ${SOURCES})
 add_dependencies(DiplomaProject ImGui)
