@@ -46,8 +46,6 @@ file(GLOB IMGUI_SOURCES
   ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
 )
 
-file(GLOB SOURCES "src/*.cc"  "src/*.h")
-
 
 add_library(imgui STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
@@ -55,10 +53,7 @@ target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR}/backends)
 target_link_libraries(imgui PUBLIC glfw)
 target_link_libraries(imgui PUBLIC glad)
 
-add_executable(DiplomaProject ${SOURCES})
 include_directories(${glfw_SOURCE_DIR}/include)
 
-target_link_libraries(DiplomaProject PRIVATE glfw)
-target_link_libraries(DiplomaProject PUBLIC imgui)
-target_link_libraries(DiplomaProject PRIVATE glad)
-
+add_subdirectory ("inheritance_version")
+add_subdirectory ("component_version")
