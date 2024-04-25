@@ -1,63 +1,101 @@
-#include <glad/glad.h>
 #include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath> 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
 
+struct Position {
+    float x;
+    float y;
+};
+
+struct Velocity {
+    float dx;
+    float dy;
+};
+
+class Entity {
+public:
+    std::vector<Position> positions;
+    std::vector<Velocity> velocities;
+};
+
+class MovementSystem {
+    public:
+        void update(Entity& entity) {
+            for (size_t i = 0; i < entity.positions.size(); ++i) {
+                entity.positions[i].x += entity.velocities[i].dx;
+                entity.positions[i].y += entity.velocities[i].dy;
+            }
+        }
+};
+
+class CircleRenderingSystem {
+    public:
+        void drawCircle(float x, float y, float radius) {
+            const int num_segments = 30;
+            glBegin(GL_TRIANGLE_FAN);
+            for (int i = 0; i < num_segments; ++i) {
+                float angle = 2.0f * 3.1415926f * float(i) / float(num_segments);
+                float dx = radius * cosf(angle);
+                float dy = radius * sinf(angle);
+                glVertex2f(x + dx, y + dy);
+            }
+            glEnd();
+        }
+
+};
+
 int main() {
-    // Инициализация GLFW
+
     glfwInit();
-    GLFWwindow* window = glfwCreateWindow(800, 600, "ImGui Example", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(800, 800, "ESC", NULL, NULL);
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Включить вертикальную синхронизацию
+    glfwSwapInterval(1);
 
-    // Инициализация glad
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-
-    // Инициализация Dear ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 
-    // Цикл отрисовки
+    Entity player;
+    player.positions.push_back({0.0f, 0.0f});
+    player.velocities.push_back({0.01f, 0.0f});
+
+    MovementSystem movementSystem;
+    CircleRenderingSystem circle_rendering_system;
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        // Начало фрейма ImGui
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // Создание интерфейса
-        ImGui::Begin("Hello, world!");
-        ImGui::Text("This is some useful text.");
-        if (ImGui::Button("Click me!"))
-            std::cout << "Button clicked!\n";
-        ImGui::End();
+        movementSystem.update(player);
 
-        // Рендеринг интерфейса ImGui
+        glClear(GL_COLOR_BUFFER_BIT);
+        for (size_t i = 0; i < player.positions.size(); ++i) {
+            circle_rendering_system.drawCircle(player.positions[i].x, player.positions[i].y, 0.3f);
+        }
+
         ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
-        glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        // Обновление окна
         glfwSwapBuffers(window);
     }
 
-    // Очистка Dear ImGui
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    // Очистка GLFW
     glfwDestroyWindow(window);
     glfwTerminate();
 
