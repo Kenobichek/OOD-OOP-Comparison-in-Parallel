@@ -1,65 +1,62 @@
-#include <glad/glad.h>
 #include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath> 
+#include <GLFW/glfw3.h>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include <GLFW/glfw3.h>
+#include "entity_manager.h"
+#include "systems.h"
 
 int main() {
-    // Инициализация GLFW
-    glfwInit();
-    GLFWwindow* window = glfwCreateWindow(800, 600, "ImGui Example", NULL, NULL);
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Включить вертикальную синхронизацию
 
-    // Инициализация glad
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+	glfwInit();
+	GLFWwindow* window = glfwCreateWindow(800, 800, "ESC", NULL, NULL);
+	glfwMakeContextCurrent(window);
+	glfwSwapInterval(1);
 
-    // Инициализация Dear ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 130");
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 130");
 
-    // Цикл отрисовки
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+	auto entity_manager = std::make_shared<EntityManager>();
+	auto ent = entity_manager->CreateEntity()
+		.AddComponent(std::make_shared<Position>(0, 0))
+		.AddComponent(std::make_shared<Velocity>(0.001f, 0));
 
-        // Начало фрейма ImGui
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+	MovementSystem movement_system(entity_manager);
+	RenderingSystem circle_rendering_system(entity_manager);
 
-        // Создание интерфейса
-        ImGui::Begin("Hello, world!");
-        ImGui::Text("This is some useful text.");
-        if (ImGui::Button("Click me!"))
-            std::cout << "Button clicked!\n";
-        ImGui::End();
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 
-        // Рендеринг интерфейса ImGui
-        ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 
-        // Обновление окна
-        glfwSwapBuffers(window);
-    }
+		movement_system.Update();
 
-    // Очистка Dear ImGui
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+		glClear(GL_COLOR_BUFFER_BIT);
+		circle_rendering_system.Draw();
 
-    // Очистка GLFW
-    glfwDestroyWindow(window);
-    glfwTerminate();
+		ImGui::Render();
+		int display_w, display_h;
+		glfwGetFramebufferSize(window, &display_w, &display_h);
+		glViewport(0, 0, display_w, display_h);
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    return 0;
+		glfwSwapBuffers(window);
+	}
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
+	glfwDestroyWindow(window);
+	glfwTerminate();
+
+	return 0;
 }

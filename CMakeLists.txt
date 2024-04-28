@@ -47,9 +47,14 @@ file(GLOB IMGUI_SOURCES
 )
 
 
+# opengl
+find_package(OpenGL REQUIRED)
+
+
 add_library(imgui STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR}/backends)
+target_link_libraries(imgui PUBLIC OpenGL::GL)
 target_link_libraries(imgui PUBLIC glfw)
 target_link_libraries(imgui PUBLIC glad)
 
