@@ -18,3 +18,10 @@ struct Velocity : public Component {
 	float dx;
 	float dy;
 };
+
+struct Dimension : public Component {
+	Dimension(float h, float w) : height(h), width(w) {}
+	
+	float height;
+	float width;
+};

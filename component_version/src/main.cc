@@ -25,7 +25,8 @@ int main() {
 	auto entity_manager = std::make_shared<EntityManager>();
 	auto ent = entity_manager->CreateEntity()
 		.AddComponent(std::make_shared<Position>(0, 0))
-		.AddComponent(std::make_shared<Velocity>(0.001f, 0));
+		.AddComponent(std::make_shared<Velocity>(0.01f, 0.02f))
+		.AddComponent(std::make_shared<Dimension>(0.3f, 0.3f));
 
 	MovementSystem movement_system(entity_manager);
 	RenderingSystem circle_rendering_system(entity_manager);

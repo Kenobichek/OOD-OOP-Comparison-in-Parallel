@@ -25,11 +25,19 @@ class Circle : public Object {
 		void Update() override {
 			x += dx;
 			y += dy;
+
+			if (x - radius < -1  || x + radius > 1) {
+				x = x < 0 ? radius - 1 : 1 - radius;
+				dx *= -1;
+			}
+			if (y - radius < -1 || y + radius > 1) {
+				y = y < 0 ? radius - 1 : 1 - radius;
+				dy *= -1;
+			}
 		}
 
 		void Draw() const override {
 			const int num_segments = 30;
-			const float radius = 0.3;
 
 			glBegin(GL_TRIANGLE_FAN);
 			for (int i = 0; i < num_segments; ++i) {
@@ -42,7 +50,7 @@ class Circle : public Object {
 		}
 
 	private:
-		int radius;
+		float radius;
 };
 
 class Square : public Object {
@@ -52,6 +60,15 @@ class Square : public Object {
 		void Update() override {
 			x += dx;
 			y += dy;
+
+			if (x - side_length / 2 < -1  || x + side_length / 2 > 1) {
+				x = x < 0 ? side_length/2 - 1 : 1 - side_length/2;
+				dx *= -1;
+			}
+			if (y - side_length / 2 < -1 || y + side_length / 2 > 1) {
+				y = y < 0 ? side_length / 2 - 1 : 1 - side_length / 2;
+				dy *= -1;
+			}
 		}
 
 		void Draw() const override {
