@@ -25,3 +25,11 @@ struct Dimension : public Component {
 	float height;
 	float width;
 };
+
+struct Color : public Component {
+	Color(float r, float g, float b) : red(r), green(g), blue(b) {}
+
+	float red;
+	float green;
+	float blue;
+};

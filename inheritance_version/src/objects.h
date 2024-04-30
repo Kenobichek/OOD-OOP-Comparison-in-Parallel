@@ -8,14 +8,24 @@
 
 class Object {
 	public:
-		Object(float posX, float posY, float spdX, float spdY) : x(posX), y(posY), dx(spdX), dy(spdY) {}
+		Object(float posX, float posY, float spdX, float spdY)
+			: x(posX), y(posY), dx(spdX), dy(spdY), color(1.0f, 1.0f, 1.0f, 1.0f) {}
 
 		virtual void Update() = 0;
 		virtual void Draw() const = 0;
+			
+		void SetColor(float r, float g, float b, float a = 1.0f) {
+			color = ImVec4(r, g, b, a);
+		}
+
+		ImVec4 GetColor() const {
+			return color;
+		}
 
 	protected:
 		float x, y;
 		float dx, dy;
+		ImVec4 color;
 };
 
 class Circle : public Object {
