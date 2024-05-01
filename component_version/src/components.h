@@ -1,4 +1,5 @@
 #pragma once
+#include <random>
 
 struct Component
 {
@@ -6,13 +7,22 @@ struct Component
 };
 
 struct Position : public Component {
-	Position(float ax, float ay) : x(ax), y(ay) {}
+	Position(float ax = 0.0f, float ay = 0.0f) : x(ax), y(ay) {}
 
 	float x;
 	float y;
 };
 
 struct Velocity : public Component {
+	Velocity() {
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution<float> dis(-0.01f, 0.01f);
+
+		dx = dis(gen);
+		dy = dis(gen);
+	}
+
 	Velocity(float adx, float ady) : dx(adx), dy(ady) {}
 	
 	float dx;
@@ -20,16 +30,14 @@ struct Velocity : public Component {
 };
 
 struct Dimension : public Component {
-	Dimension(float h, float w) : height(h), width(w) {}
+	Dimension(float h = 0.01f, float w = 0.01f) : height(h), width(w) {}
 	
 	float height;
 	float width;
 };
 
 struct Color : public Component {
-	Color(float r, float g, float b) : red(r), green(g), blue(b) {}
+	Color(float r = 1.0f, float g = 1.0f, float b = 1.0f, float a = 1.0f) : color(r, g, b, a) {}
 
-	float red;
-	float green;
-	float blue;
+	ImVec4 color;
 };

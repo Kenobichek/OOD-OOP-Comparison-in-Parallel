@@ -11,7 +11,7 @@
 int main() {
 
 	glfwInit();
-	GLFWwindow* window = glfwCreateWindow(800, 800, "ESC", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(800, 800, "Inheritance Version", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1);
 
@@ -22,8 +22,8 @@ int main() {
 	ImGui_ImplOpenGL3_Init("#version 130");
 
     Game game;
-	// game.AddObject(std::make_unique<Circle>(0, 0, 0.01f, 0, 0.3f));
-	game.AddObject(std::make_unique<Square>(0, 0, 0.01f, 0, 0.5));
+
+	int sliderObjectCount = 0;
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -36,6 +36,21 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		game.Draw();
+
+		ImGui::SetNextWindowPos(ImVec2(20, 10));
+		ImGui::SetNextWindowSize(ImVec2(300, 80));
+
+		ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+		ImGui::Text("Num Objects: %d", sliderObjectCount);
+        ImGui::SliderInt("##Num Objects", &sliderObjectCount, 0, MAX_OBJECTS);
+		ImGui::End();
+
+		if (game.GetObjectCount() > sliderObjectCount) {
+			game.RemoveLastObject();
+		}
+		else if (game.GetObjectCount() < sliderObjectCount) {
+			game.AddObject(std::make_unique<Circle>());
+		}
 
 		ImGui::Render();
 		int display_w, display_h;

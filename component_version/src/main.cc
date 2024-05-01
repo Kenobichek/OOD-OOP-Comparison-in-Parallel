@@ -12,7 +12,7 @@
 int main() {
 
 	glfwInit();
-	GLFWwindow* window = glfwCreateWindow(800, 800, "ESC", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(800, 800, "Component Version", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1);
 
@@ -23,13 +23,10 @@ int main() {
 	ImGui_ImplOpenGL3_Init("#version 130");
 
 	auto entity_manager = std::make_shared<EntityManager>();
-	auto ent = entity_manager->CreateEntity()
-		.AddComponent(std::make_shared<Position>(0, 0))
-		.AddComponent(std::make_shared<Velocity>(0.01f, 0.02f))
-		.AddComponent(std::make_shared<Dimension>(0.3f, 0.3f));
-
 	MovementSystem movement_system(entity_manager);
 	RenderingSystem circle_rendering_system(entity_manager);
+
+	int slider_object_count = 0;
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -42,6 +39,24 @@ int main() {
 
 		glClear(GL_COLOR_BUFFER_BIT);
 		circle_rendering_system.Draw();
+
+		ImGui::SetNextWindowPos(ImVec2(20, 10));
+		ImGui::SetNextWindowSize(ImVec2(300, 80));
+
+		ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+		ImGui::Text("Num Objects: %d", slider_object_count);
+        ImGui::SliderInt("##Num Objects", &slider_object_count, 0, MAX_OBJECTS);
+		ImGui::End();
+
+		if (entity_manager->GetObjectCount() > slider_object_count) {
+			entity_manager->RemoveLastEntity();
+		}
+		else if (entity_manager->GetObjectCount() < slider_object_count) {
+			entity_manager->CreateEntity()
+				.AddComponent(std::make_shared<Position>())
+				.AddComponent(std::make_shared<Velocity>())
+				.AddComponent(std::make_shared<Dimension>());
+		}
 
 		ImGui::Render();
 		int display_w, display_h;

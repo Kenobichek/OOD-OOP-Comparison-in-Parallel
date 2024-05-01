@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
-#include <cmath>
+#include <random>
+#include <ctime>
 #include <GLFW/glfw3.h>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -8,6 +9,20 @@
 
 class Object {
 	public:
+		Object() {
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::uniform_real_distribution<float> dis(-0.01f, 0.01f);
+
+			dx = dis(gen);
+			dy = dis(gen);
+
+			x = 0;
+			y = 0;
+
+			color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+
 		Object(float posX, float posY, float spdX, float spdY)
 			: x(posX), y(posY), dx(spdX), dy(spdY), color(1.0f, 1.0f, 1.0f, 1.0f) {}
 
@@ -30,6 +45,8 @@ class Object {
 
 class Circle : public Object {
 	public:
+		Circle() : Object(), radius(0.01f) {}
+
 		Circle(float posX, float posY, float spdX, float spdY, float rad) : Object(posX, posY, spdX, spdY), radius(rad) {}
 
 		void Update() override {
@@ -65,7 +82,10 @@ class Circle : public Object {
 
 class Square : public Object {
 	public:
-		Square(float posX, float posY, float spdX, float spdY, float side) : Object(posX, posY, spdX, spdY), side_length(side) {}
+		Square() : Object(), side_length(0.01f) {}
+
+		Square(float posX, float posY, float spdX, float spdY, float side) 
+			: Object(posX, posY, spdX, spdY), side_length(side) {}
 
 		void Update() override {
 			x += dx;
@@ -88,7 +108,6 @@ class Square : public Object {
 			glVertex2f(x + side_length / 2, y + side_length / 2);
 			glVertex2f(x - side_length / 2, y + side_length / 2);
 			glEnd();
-
 		}
 
 	private:
