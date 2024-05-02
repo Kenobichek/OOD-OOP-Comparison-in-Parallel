@@ -8,6 +8,7 @@
 #include "imgui_impl_opengl3.h"
 #include "entity_manager.h"
 #include "systems.h"
+#include "thread_pool.h"
 
 int main() {
 
@@ -22,11 +23,14 @@ int main() {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
 
+	auto thread_pool = std::make_shared<ThreadPool>(2);
 	auto entity_manager = std::make_shared<EntityManager>();
-	MovementSystem movement_system(entity_manager);
+	
+	MovementSystem movement_system(entity_manager, thread_pool);
 	RenderingSystem circle_rendering_system(entity_manager);
 
 	int slider_object_count = 0;
+	int object_count = 0;
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -35,28 +39,38 @@ int main() {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		movement_system.Update();
-
-		glClear(GL_COLOR_BUFFER_BIT);
-		circle_rendering_system.Draw();
 
 		ImGui::SetNextWindowPos(ImVec2(20, 10));
 		ImGui::SetNextWindowSize(ImVec2(300, 80));
 
 		ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 		ImGui::Text("Num Objects: %d", slider_object_count);
-        ImGui::SliderInt("##Num Objects", &slider_object_count, 0, MAX_OBJECTS);
+		ImGui::SliderInt("##Num Objects", &slider_object_count, 0, MAX_OBJECTS);
 		ImGui::End();
 
-		if (entity_manager->GetObjectCount() > slider_object_count) {
-			entity_manager->RemoveLastEntity();
+		if (object_count > slider_object_count) {
+			int dif = object_count - slider_object_count;
+			for (auto i = 0; i < dif; i++) {
+				entity_manager->RemoveLastEntity();
+			}
+			object_count = slider_object_count;
 		}
-		else if (entity_manager->GetObjectCount() < slider_object_count) {
-			entity_manager->CreateEntity()
-				.AddComponent(std::make_shared<Position>())
-				.AddComponent(std::make_shared<Velocity>())
-				.AddComponent(std::make_shared<Dimension>());
+		else if (object_count < slider_object_count) {
+			int dif = slider_object_count - object_count;
+			for (auto i = 0; i < dif; i++) {
+				entity_manager->CreateEntity()
+					.AddComponent(std::make_shared<Position>())
+					.AddComponent(std::make_shared<Velocity>())
+					.AddComponent(std::make_shared<Dimension>());
+			}
+			object_count = slider_object_count;
 		}
+
+		movement_system.Update();
+		thread_pool->WaitForAllThreads();
+
+		glClear(GL_COLOR_BUFFER_BIT);
+		circle_rendering_system.Draw();
 
 		ImGui::Render();
 		int display_w, display_h;

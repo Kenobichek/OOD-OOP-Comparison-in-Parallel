@@ -17,16 +17,21 @@ struct Velocity : public Component {
 	Velocity() {
 		std::random_device rd;
 		std::mt19937 gen(rd());
-		std::uniform_real_distribution<float> dis(-0.01f, 0.01f);
+		std::uniform_real_distribution<float> dis2(1.0f, 5.0f);
+		std::uniform_real_distribution<float> dis(0.0f, 2 * M_PI);
 
-		dx = dis(gen);
-		dy = dis(gen);
+		float angle = dis(gen);
+		dx = cos(angle);
+		dy = sin(angle);
+
+		speed = 0.1;
 	}
 
-	Velocity(float adx, float ady) : dx(adx), dy(ady) {}
+	Velocity(float adx, float ady, float aspeed = 10.0f) : dx(adx), dy(ady), speed(aspeed) {}
 	
 	float dx;
 	float dy;
+	float speed;
 };
 
 struct Dimension : public Component {
