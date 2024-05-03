@@ -12,10 +12,14 @@ class Object {
 		Object() {
 			std::random_device rd;
 			std::mt19937 gen(rd());
-			std::uniform_real_distribution<float> dis(-0.01f, 0.01f);
+			std::uniform_real_distribution<float> dis2(0.01f, 0.1f);
+			std::uniform_real_distribution<float> dis(0.0f, 2 * M_PI);
 
-			dx = dis(gen);
-			dy = dis(gen);
+			float angle = dis(gen);
+			dx = cos(angle);
+			dy = sin(angle);
+
+			speed = dis2(gen);
 
 			x = 0;
 			y = 0;
@@ -40,6 +44,7 @@ class Object {
 	protected:
 		float x, y;
 		float dx, dy;
+		float speed;
 		ImVec4 color;
 };
 
@@ -50,8 +55,8 @@ class Circle : public Object {
 		Circle(float posX, float posY, float spdX, float spdY, float rad) : Object(posX, posY, spdX, spdY), radius(rad) {}
 
 		void Update() override {
-			x += dx;
-			y += dy;
+			x += dx * speed;
+			y += dy * speed;
 
 			if (x - radius < -1  || x + radius > 1) {
 				x = x < 0 ? radius - 1 : 1 - radius;
