@@ -29,9 +29,9 @@ class EntityManager {
 
 		std::unique_ptr<Entity> RemoveLastEntity() {
 			if (!entities.empty()) {
-				auto lastEntity = std::move(entities.back());
+				auto last_entity = std::move(entities.back());
 				entities.pop_back();
-				return lastEntity;
+				return last_entity;
 			}
 			return nullptr;
 		}
