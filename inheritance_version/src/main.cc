@@ -21,9 +21,11 @@ int main() {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
 
-    Game game;
+	auto thread_pool = std::make_shared<ThreadPool>(2);
+	Game game(thread_pool);
 
-	int sliderObjectCount = 0;
+	int slider_object_count = 0;
+	int object_count = 0;
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -32,25 +34,36 @@ int main() {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		game.Update();
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		game.Draw();
 
 		ImGui::SetNextWindowPos(ImVec2(20, 10));
 		ImGui::SetNextWindowSize(ImVec2(300, 80));
 
 		ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
-		ImGui::Text("Num Objects: %d", sliderObjectCount);
-        ImGui::SliderInt("##Num Objects", &sliderObjectCount, 0, MAX_OBJECTS);
+		ImGui::Text("Num Objects: %d", slider_object_count);
+		ImGui::SliderInt("##Num Objects", &slider_object_count, 0, MAX_OBJECTS);
 		ImGui::End();
 
-		if (game.GetObjectCount() > sliderObjectCount) {
-			game.RemoveLastObject();
+		if (object_count > slider_object_count) {
+			int dif = object_count - slider_object_count;
+			for (auto i = 0; i < dif; i++) {
+				game.RemoveLastObject();
+			}
+			object_count = slider_object_count;
 		}
-		else if (game.GetObjectCount() < sliderObjectCount) {
-			game.AddObject(std::make_unique<Circle>());
+		else if (object_count < slider_object_count) {
+			int dif = slider_object_count - object_count;
+			for (auto i = 0; i < dif; i++) {
+				game.AddObject(std::make_unique<Circle>());
+			}
+			object_count = slider_object_count;
 		}
+
+		game.Update();
+		thread_pool->WaitForAllThreads();
+
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		game.Draw();
 
 		ImGui::Render();
 		int display_w, display_h;
