@@ -3,6 +3,8 @@
 #include <algorithm>
 #include "entity.h"
 
+constexpr int MAX_OBJECTS = 1000;
+
 using EntityVector = std::vector<std::unique_ptr<Entity>>;
 
 class EntityManager {
@@ -21,6 +23,18 @@ class EntityManager {
 			return entities;
 		}
 
+		int GetObjectCount() const {
+			return entities.size();
+		}
+
+		std::unique_ptr<Entity> RemoveLastEntity() {
+			if (!entities.empty()) {
+				auto last_entity = std::move(entities.back());
+				entities.pop_back();
+				return last_entity;
+			}
+			return nullptr;
+		}
 
 	private:
 		EntityVector entities;
