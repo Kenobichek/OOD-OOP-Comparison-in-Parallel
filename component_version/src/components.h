@@ -17,14 +17,14 @@ struct Velocity : public Component {
 	Velocity() {
 		std::random_device rd;
 		std::mt19937 gen(rd());
-		std::uniform_real_distribution<float> dis2(1.0f, 5.0f);
+		std::uniform_real_distribution<float> dis2(0.01f, 0.1f);
 		std::uniform_real_distribution<float> dis(0.0f, 2 * M_PI);
 
 		float angle = dis(gen);
 		dx = cos(angle);
 		dy = sin(angle);
 
-		speed = 0.1;
+		speed = dis2(gen);
 	}
 
 	Velocity(float adx, float ady, float aspeed = 10.0f) : dx(adx), dy(ady), speed(aspeed) {}
