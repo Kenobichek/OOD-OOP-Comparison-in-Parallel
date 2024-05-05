@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+set(TRACY_VERSION_STRING, '0.10.0')
 
 find_package(Threads REQUIRED)
 include(FetchContent)
@@ -49,6 +50,17 @@ file(GLOB IMGUI_SOURCES
 
 # opengl
 find_package(OpenGL REQUIRED)
+
+
+# Tracy Profiler
+FetchContent_Declare(
+  tracy
+  GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+  GIT_TAG        37aff70dfa50cf6307b3fee6074d627dc2929143   # version 0.10.0
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(tracy)
 
 
 add_library(imgui STATIC ${IMGUI_SOURCES})

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath> 
 #include <GLFW/glfw3.h>
+#include <tracy/Tracy.hpp>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -27,17 +28,17 @@ int main() {
 	int slider_object_count = 0;
 	int object_count = 0;
 
+	ZoneScoped;
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
+		
 		ImGui::NewFrame();
-
-
 		ImGui::SetNextWindowPos(ImVec2(20, 10));
 		ImGui::SetNextWindowSize(ImVec2(300, 80));
-
 		ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 		ImGui::Text("Num Objects: %d", slider_object_count);
 		ImGui::SliderInt("##Num Objects", &slider_object_count, 0, MAX_OBJECTS);
@@ -58,12 +59,16 @@ int main() {
 			object_count = slider_object_count;
 		}
 
-		game.Update();
-		thread_pool->WaitForAllThreads();
-
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		game.Draw();
+		{
+			ZoneScopedN("UpdateSystems");
+			game.Update();
+			thread_pool->WaitForAllThreads();
+		}
+		{
+			ZoneScopedN("RenderFrame");
+			glClear(GL_COLOR_BUFFER_BIT);
+			game.Draw();
+		}
 
 		ImGui::Render();
 		int display_w, display_h;
@@ -72,6 +77,8 @@ int main() {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);
+
+		FrameMark;
 	}
 
 	ImGui_ImplOpenGL3_Shutdown();
