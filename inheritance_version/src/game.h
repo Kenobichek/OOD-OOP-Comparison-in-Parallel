@@ -28,11 +28,23 @@ class Game {
 		}
 
 		void Update() {
-			for (auto& obj : objects) {
-				thread_pool->AddTask([&]() {
-					if (!obj) return;
-					obj->Update();
+			size_t num_threads = thread_pool->GetThreadCount();
+			int chunk_size = GetObjectCount() / num_threads;
+			int remaining_size = GetObjectCount() % num_threads;
+
+			size_t start_i = 0;
+
+			for (size_t i = 0; i < num_threads; ++i) {
+				int end_i = start_i == 0 ? chunk_size + remaining_size : chunk_size;
+				end_i += start_i;
+			
+				thread_pool->AddTask([=]() {
+					for (size_t i = start_i; i < end_i; ++i) {
+						objects[i]->Update();
+					}
 				});
+
+				start_i = end_i;
 			}
 		}
 
