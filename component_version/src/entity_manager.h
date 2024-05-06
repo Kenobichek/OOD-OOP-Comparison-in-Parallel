@@ -36,21 +36,6 @@ class EntityManager {
 			return nullptr;
 		}
 
-		EntityVector GetEntitiesInRange(size_t start, size_t end) const {
-			if (start >= entities.size() || end >= entities.size() || start > end) {
-				return {};
-			}
-
-			EntityVector entities_in_range;
-			entities_in_range.reserve(end - start + 1);
-
-			for (size_t i = start; i <= end; ++i) {
-				entities_in_range.push_back(std::make_unique<Entity>(*entities[i]));
-			}
-
-			return entities_in_range;
-		}
-
 	private:
 		EntityVector entities;
 };
