@@ -14,36 +14,52 @@ class MovementSystem {
 		: entity_manager(manager), thread_pool(thread_pool) {}
 
 
-		void Update() {
-			for (auto& entity : entity_manager->GetEntities()) {
-				thread_pool->AddTask([&]() {
-					if (!entity) return;
-
-					auto position = entity->GetComponent<Position>();
-					auto velocity = entity->GetComponent<Velocity>();
-					auto dimension = entity->GetComponent<Dimension>();
-					auto speed = entity->GetComponent<Dimension>();
-
-					if (position && velocity && dimension) {
-						position->x += velocity->dx * velocity->speed;
-						position->y += velocity->dy * velocity->speed;
-
-						const float width = dimension->width;
-						const float height = dimension->height;
-
-						if (position->x - width < -1  || position->x + width > 1) {
-							position->x = position->x < 0 ? width - 1 : 1 - width;
-							velocity->dx *= -1;
-						}
-						if (position->y - height < -1 || position->y + height > 1) {
-							position->y = position->y < 0 ? height - 1 : 1 - height;
-							velocity->dy *= -1;
-						}
-					}
-				});
-			}
-		}
+	void Update() {
+		size_t num_threads = thread_pool->GetThreadCount();
+		size_t entities_per_thread = (entity_manager->GetObjectCount() + num_threads - 1) / num_threads;
+		int chunk_size = entity_manager->GetObjectCount() / num_threads;
+		int remaining_size = entity_manager->GetObjectCount() % num_threads;
 		
+		size_t start_i = 0;
+		
+		for (size_t i = 0; i < num_threads; ++i) {
+			int end_i = start_i == 0 ? chunk_size + remaining_size : chunk_size;
+			end_i += start_i;
+
+			auto entities = entity_manager->GetEntitiesInRange(start_i, end_i);
+
+			thread_pool->AddTask([&]() {
+			for (auto& entity : entity_manager->GetEntities()) {  
+				if (!entity) return;
+
+				auto position = entity->GetComponent<Position>();
+				auto velocity = entity->GetComponent<Velocity>();
+				auto dimension = entity->GetComponent<Dimension>();
+				auto speed = entity->GetComponent<Dimension>();
+
+				if (position && velocity && dimension) {
+				position->x += velocity->dx * velocity->speed;
+				position->y += velocity->dy * velocity->speed;
+
+				const float width = dimension->width;
+				const float height = dimension->height;
+
+				if (position->x - width < -1  || position->x + width > 1) {
+					position->x = position->x < 0 ? width - 1 : 1 - width;
+					velocity->dx *= -1;
+				}
+				if (position->y - height < -1 || position->y + height > 1) {
+					position->y = position->y < 0 ? height - 1 : 1 - height;
+					velocity->dy *= -1;
+				}
+				}
+			}
+			});
+
+			start_i = end_i;
+		}
+	}
+
 	private:
 		std::shared_ptr<EntityManager> entity_manager;
 		std::shared_ptr<ThreadPool> thread_pool;
