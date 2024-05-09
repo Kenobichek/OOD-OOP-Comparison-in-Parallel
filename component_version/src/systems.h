@@ -14,9 +14,24 @@ class MovementSystem {
 		: entity_manager(manager), thread_pool(thread_pool) {}
 
 
-		void Update() {
-			for (auto& entity : entity_manager->GetEntities()) {
-				thread_pool->AddTask([&]() {
+	void Update() {
+		size_t num_threads = thread_pool->GetThreadCount();
+		int chunk_size = entity_manager->GetObjectCount() / num_threads;
+		int remaining_size = entity_manager->GetObjectCount() % num_threads;
+		
+		size_t start_i = 0;
+		
+		for (size_t i = 0; i < num_threads; ++i) {
+			int end_i = start_i == 0 ? chunk_size + remaining_size : chunk_size;
+			end_i += start_i;
+
+			auto& entities = entity_manager->GetEntities();
+			auto start_it = entities.begin() + start_i;
+			auto end_it = entities.begin() + end_i;
+
+			thread_pool->AddTask([=]() {
+				for (auto it = start_it; it != end_it; ++it) {
+					auto& entity = *it;
 					if (!entity) return;
 
 					auto position = entity->GetComponent<Position>();
@@ -40,10 +55,13 @@ class MovementSystem {
 							velocity->dy *= -1;
 						}
 					}
-				});
-			}
+				}
+			});
+
+			start_i = end_i;
 		}
-		
+	}
+
 	private:
 		std::shared_ptr<EntityManager> entity_manager;
 		std::shared_ptr<ThreadPool> thread_pool;
