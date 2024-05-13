@@ -24,11 +24,12 @@ int main() {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
 
-	auto thread_pool = std::make_shared<ThreadPool>(2);
+	auto thread_pool = std::make_shared<ThreadPool>(4);
 	auto entity_manager = std::make_shared<EntityManager>();
 	
 	MovementSystem movement_system(entity_manager, thread_pool);
-	RenderingSystem circle_rendering_system(entity_manager);
+	CircleRenderingSystem circle_rendering_system(entity_manager);
+	SquareRenderingSystem square_rendering_system(entity_manager);
 
 	int slider_object_count = 0;
 	int object_count = 0;
@@ -62,7 +63,8 @@ int main() {
 				entity_manager->CreateEntity()
 					.AddComponent(std::make_shared<Position>())
 					.AddComponent(std::make_shared<Velocity>())
-					.AddComponent(std::make_shared<Dimension>());
+					.AddComponent(std::make_shared<Dimension>(0.01, 0.01))
+					.AddComponent(std::make_shared<Shape>());
 			}
 			object_count = slider_object_count;
 		}
@@ -75,10 +77,8 @@ int main() {
 			ZoneScopedN("RenderFrame");
 			glClear(GL_COLOR_BUFFER_BIT);
 			circle_rendering_system.Draw();
+			square_rendering_system.Draw();
 		}
-
-		glClear(GL_COLOR_BUFFER_BIT);
-		circle_rendering_system.Draw();
 
 		ImGui::Render();
 		int display_w, display_h;

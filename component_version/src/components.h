@@ -46,3 +46,33 @@ struct Color : public Component {
 
 	ImVec4 color;
 };
+
+struct Shape : public Component {
+	enum EShape {
+		Circle,
+		Square
+	};
+
+	Shape() {
+		static std::random_device rd;
+		static std::mt19937 gen(rd());
+		static std::uniform_int_distribution<int> distribution(0, 1);
+
+		int randomShape = distribution(gen);
+
+		switch (randomShape) {
+			case 0:
+				shape = EShape::Square;
+				break;
+			case 1:
+				shape = EShape::Circle;
+				break;
+			default:
+				shape = EShape::Square;
+				break;
+		}
+
+	}
+
+	EShape shape;
+};

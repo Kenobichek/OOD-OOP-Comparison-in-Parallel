@@ -9,6 +9,11 @@
 
 class Object {
 	public:
+		enum EShape {
+			Circle,
+			Square
+		};
+
 		Object() {
 			std::random_device rd;
 			std::mt19937 gen(rd());
@@ -25,9 +30,27 @@ class Object {
 			y = 0;
 
 			color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+			static std::uniform_int_distribution<int> distribution(0, 1);
+
+			int randomShape = distribution(gen);
+
+			switch (randomShape) {
+				case 0:
+					shape = EShape::Square;
+					break;
+				case 1:
+					shape = EShape::Circle;
+					break;
+				default:
+					shape = EShape::Square;
+					break;
+			}
+
+			shape = EShape::Circle;
 		}
 
-		Object(float posX, float posY, float spdX, float spdY)
+		Object(float posX, float posY, float spdX, float spdY, EShape shape)
 			: x(posX), y(posY), dx(spdX), dy(spdY), color(1.0f, 1.0f, 1.0f, 1.0f) {}
 
 		virtual void Update() = 0;
@@ -40,31 +63,34 @@ class Object {
 		ImVec4 GetColor() const {
 			return color;
 		}
-
+		
 	protected:
 		float x, y;
 		float dx, dy;
 		float speed;
 		ImVec4 color;
+		EShape shape;
 };
 
 class Circle : public Object {
 	public:
 		Circle() : Object(), radius(0.01f) {}
 
-		Circle(float posX, float posY, float spdX, float spdY, float rad) : Object(posX, posY, spdX, spdY), radius(rad) {}
+		Circle(float posX, float posY, float spdX, float spdY, float rad, EShape shape = EShape::Circle) : Object(posX, posY, spdX, spdY, shape), radius(rad) {}
 
 		void Update() override {
-			x += dx * speed;
-			y += dy * speed;
-
-			if (x - radius < -1  || x + radius > 1) {
-				x = x < 0 ? radius - 1 : 1 - radius;
-				dx *= -1;
-			}
-			if (y - radius < -1 || y + radius > 1) {
-				y = y < 0 ? radius - 1 : 1 - radius;
-				dy *= -1;
+			{
+				ZoneScopedN("x y");
+				x += dx * speed;
+				y += dy * speed;
+				if (x - radius / 2 < -1  || x + radius / 2  > 1) {
+					x = x < 0 ? radius / 2  - 1 : 1 - radius / 2 ;
+					dx *= -1;
+				}
+				if (y - radius / 2  < -1 || y + radius / 2  > 1) {
+					y = y < 0 ? radius / 2 - 1 : 1 - radius / 2 ;
+					dy *= -1;
+				}
 			}
 		}
 
@@ -74,8 +100,8 @@ class Circle : public Object {
 			glBegin(GL_TRIANGLE_FAN);
 			for (int i = 0; i < num_segments; ++i) {
 				float angle = 2.0f * M_PI * float(i) / float(num_segments);
-				float dx = radius * cosf(angle);
-				float dy = radius * sinf(angle);
+				float dx = radius / 2  * cosf(angle);
+				float dy = radius / 2  * sinf(angle);
 				glVertex2f(x + dx, y + dy);
 			}
 			glEnd();
@@ -89,12 +115,12 @@ class Square : public Object {
 	public:
 		Square() : Object(), side_length(0.01f) {}
 
-		Square(float posX, float posY, float spdX, float spdY, float side) 
-			: Object(posX, posY, spdX, spdY), side_length(side) {}
+		Square(float posX, float posY, float spdX, float spdY, float side, EShape shape = EShape::Square) 
+			: Object(posX, posY, spdX, spdY, shape), side_length(side) {}
 
 		void Update() override {
-			x += dx;
-			y += dy;
+			x += dx * speed;
+			y += dy * speed;
 
 			if (x - side_length / 2 < -1  || x + side_length / 2 > 1) {
 				x = x < 0 ? side_length/2 - 1 : 1 - side_length/2;
