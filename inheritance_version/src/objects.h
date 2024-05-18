@@ -9,110 +9,132 @@
 
 class Object {
 	public:
-		Object() {
-			std::random_device rd;
-			std::mt19937 gen(rd());
-			std::uniform_real_distribution<float> dis2(0.01f, 0.1f);
-			std::uniform_real_distribution<float> dis(0.0f, 2 * M_PI);
-
-			float angle = dis(gen);
-			dx = cos(angle);
-			dy = sin(angle);
-
-			speed = dis2(gen);
-
-			x = 0;
-			y = 0;
-
-			color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-		}
-
-		Object(float posX, float posY, float spdX, float spdY)
-			: x(posX), y(posY), dx(spdX), dy(spdY), color(1.0f, 1.0f, 1.0f, 1.0f) {}
-
-		virtual void Update() = 0;
-		virtual void Draw() const = 0;
-			
-		void SetColor(float r, float g, float b, float a = 1.0f) {
-			color = ImVec4(r, g, b, a);
-		}
-
-		ImVec4 GetColor() const {
-			return color;
-		}
+		virtual ~Object() {}
 
 	protected:
-		float x, y;
-		float dx, dy;
-		float speed;
-		ImVec4 color;
+		double x, y;
+		double dx, dy;
+		double speed;
 };
 
-class Circle : public Object {
+
+class Drawable : public virtual Object {
 	public:
-		Circle() : Object(), radius(0.01f) {}
+		virtual void Draw() const = 0;
+};
 
-		Circle(float posX, float posY, float spdX, float spdY, float rad) : Object(posX, posY, spdX, spdY), radius(rad) {}
 
-		void Update() override {
+class Movable : public virtual Object {
+	public:
+		virtual void Move() {
 			x += dx * speed;
 			y += dy * speed;
+		};
+};
 
-			if (x - radius < -1  || x + radius > 1) {
-				x = x < 0 ? radius - 1 : 1 - radius;
-				dx *= -1;
-			}
-			if (y - radius < -1 || y + radius > 1) {
-				y = y < 0 ? radius - 1 : 1 - radius;
-				dy *= -1;
-			}
-		}
 
-		void Draw() const override {
+class Collidable : public virtual Object {
+	public:
+		virtual void HandleCollisionWithBounds() = 0;
+};
+
+
+class Shape : public Drawable, public Movable, public Collidable {
+	public:
+		Shape () {
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::uniform_real_distribution<float> angle_dist(0.0f, 2 * M_PI);
+			std::uniform_real_distribution<float> speed_dist(0.01f, 0.1f);
+			std::uniform_real_distribution<float> position_dist(-1.0f, 1.0f);
+
+			x = position_dist(gen);
+			y = position_dist(gen);
+
+			float angle = angle_dist(gen);
+			dx = std::cos(angle);
+			dy = std::sin(angle);
+
+			speed = speed_dist(gen);
+		};
+
+		virtual void Draw() const = 0;
+		virtual void HandleCollisionWithBounds() = 0;
+};
+
+
+class Circle : public Shape {
+
+	public:
+		Circle() : radius(0.01f) {}
+
+		virtual void Draw() const override {
 			const int num_segments = 30;
 
 			glBegin(GL_TRIANGLE_FAN);
 			for (int i = 0; i < num_segments; ++i) {
 				float angle = 2.0f * M_PI * float(i) / float(num_segments);
-				float dx = radius * cosf(angle);
-				float dy = radius * sinf(angle);
+				float dx = radius / 2 * cosf(angle);
+				float dy = radius / 2 * sinf(angle);
 				glVertex2f(x + dx, y + dy);
 			}
 			glEnd();
 		}
 
-	private:
-		float radius;
-};
 
-class Square : public Object {
-	public:
-		Square() : Object(), side_length(0.01f) {}
-
-		Square(float posX, float posY, float spdX, float spdY, float side) 
-			: Object(posX, posY, spdX, spdY), side_length(side) {}
-
-		void Update() override {
-			x += dx;
-			y += dy;
-
-			if (x - side_length / 2 < -1  || x + side_length / 2 > 1) {
-				x = x < 0 ? side_length/2 - 1 : 1 - side_length/2;
+		virtual void HandleCollisionWithBounds() override {
+			if (x - radius / 2 < -1) {
+				x = -1 + radius / 2;
+				dx *= -1;
+			} else if (x + radius / 2 > 1) {
+				x = 1 - radius / 2;
 				dx *= -1;
 			}
-			if (y - side_length / 2 < -1 || y + side_length / 2 > 1) {
-				y = y < 0 ? side_length / 2 - 1 : 1 - side_length / 2;
+
+			if (y - radius / 2 < -1) {
+				y = -1 + radius / 2;
+				dy *= -1;
+			} else if (y + radius / 2 > 1) {
+				y = 1 - radius / 2;
 				dy *= -1;
 			}
 		}
 
-		void Draw() const override {
+	private:
+		double radius;
+};
+
+
+class Square : public Shape {
+
+	public:
+		Square() : side_length(0.01f) {}
+
+		virtual void Draw() const override {
 			glBegin(GL_QUADS);
 			glVertex2f(x - side_length / 2, y - side_length / 2);
 			glVertex2f(x + side_length / 2, y - side_length / 2);
 			glVertex2f(x + side_length / 2, y + side_length / 2);
 			glVertex2f(x - side_length / 2, y + side_length / 2);
 			glEnd();
+		}
+
+		virtual void HandleCollisionWithBounds() override {
+			if (x - side_length / 2 < -1) {
+				x = -1 + side_length / 2;
+				dx *= -1;
+			} else if (x + side_length / 2 > 1) {
+				x = 1 - side_length / 2;
+				dx *= -1;
+			}
+
+			if (y - side_length / 2 < -1) {
+				y = -1 + side_length / 2;
+				dy *= -1;
+			} else if (y + side_length / 2 > 1) {
+				y = 1 - side_length / 2;
+				dy *= -1;
+			}
 		}
 
 	private:
