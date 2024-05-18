@@ -37,26 +37,27 @@ class MovementSystem {
 					if (!entity) {
 						return;
 					}
-					
+
 					auto position = entity->GetComponent<Position>();
-					auto velocity = entity->GetComponent<Velocity>();
 					auto dimension = entity->GetComponent<Dimension>();
-					auto speed = entity->GetComponent<Dimension>();
+					auto velocity = entity->GetComponent<Velocity>();
 
 					if (position && velocity && dimension) {
 						position->x += velocity->dx * velocity->speed;
 						position->y += velocity->dy * velocity->speed;
+					}
 
-						const float width = dimension->width;
-						const float height = dimension->height;
+					if (IsOutOfBounds(entity)) {
+						HandleCollisionWithBounds(entity);
+					}
 
-						if (position->x - (width / 2) < -1  || position->x +  (width / 2) > 1) {
-							position->x = position->x < 0 ? width - 1 : 1 - width;
-							velocity->dx *= -1;
-						}
-						if (position->y - (height / 2) < -1 || position->y + (height / 2) > 1) {
-							position->y = position->y < 0 ? height - 1 : 1 - height;
-							velocity->dy *= -1;
+					for (auto& other_entity : entity_manager->GetEntities()) {
+						if (entity == other_entity || !other_entity) continue;
+						
+						float toi = TimeOfImpact(entity, other_entity);
+    
+						if (toi >= 0.0f && toi <= velocity->speed) {
+							HandleCollision(entity, other_entity);
 						}
 					}
 				}
@@ -69,6 +70,14 @@ class MovementSystem {
 	private:
 		std::shared_ptr<EntityManager> entity_manager;
 		std::shared_ptr<ThreadPool> thread_pool;
+
+		bool CheckCollision(std::unique_ptr<Entity> a_entity, std::unique_ptr<Entity> b_entity);
+		bool IsOutOfBounds(std::unique_ptr<Entity>& entity);
+
+		void HandleCollisionWithBounds(std::unique_ptr<Entity>& entity);
+		void HandleCollision(std::unique_ptr<Entity>& a_entity, std::unique_ptr<Entity>& b_entity);
+
+		float TimeOfImpact(std::unique_ptr<Entity>& a_entity, std::unique_ptr<Entity>& b_entity);
 };
 
 class CircleRenderingSystem {
