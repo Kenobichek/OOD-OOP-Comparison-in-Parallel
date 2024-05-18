@@ -6,14 +6,14 @@
 
 constexpr int MAX_OBJECTS = 1000;
 
-using ObjectVector = std::vector<std::unique_ptr<Object>>;
+using ObjectVector = std::vector<std::unique_ptr<Shape>>;
 
 class Game {
 	public:
 		Game(std::shared_ptr<ThreadPool> thread_pool) 
 			: thread_pool(thread_pool) {}
 
-		void AddObject(std::unique_ptr<Object> obj) {
+		void AddObject(std::unique_ptr<Shape> obj) {
 			objects.push_back(std::move(obj));
 		}
 
@@ -40,7 +40,8 @@ class Game {
 			
 				thread_pool->AddTask([=]() {
 					for (size_t i = start_i; i < end_i; ++i) {
-						objects[i]->Update();
+						objects[i]->Move();
+						objects[i]->HandleCollisionWithBounds();
 					}
 				});
 
