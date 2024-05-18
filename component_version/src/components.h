@@ -1,5 +1,10 @@
 #pragma once
 #include <random>
+#include <ctime>
+#include <GLFW/glfw3.h>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 struct Component
 {
@@ -7,7 +12,16 @@ struct Component
 };
 
 struct Position : public Component {
-	Position(float ax = 0.0f, float ay = 0.0f) : x(ax), y(ay) {}
+	Position() {
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
+		
+		x = dis(gen);
+		y = dis(gen);
+	}
+
+	Position(float ax, float ay) : x(ax), y(ay) {}
 
 	float x;
 	float y;
