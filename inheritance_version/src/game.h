@@ -42,6 +42,15 @@ class Game {
 					for (size_t i = start_i; i < end_i; ++i) {
 						objects[i]->Move();
 						objects[i]->HandleCollisionWithBounds();
+
+						for (auto& other_entity : objects) {
+							if (objects[i] == other_entity || !other_entity) continue;
+							float toi = objects[i]->TimeOfImpact(other_entity);
+							if (toi >= 0.0f && toi <= objects[i]->GetSpeed()) {
+								objects[i]->HandleCollision(other_entity);
+							}
+						}
+
 					}
 				});
 

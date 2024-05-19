@@ -9,6 +9,13 @@
 #include "imgui_impl_opengl3.h"
 #include "game.h"
 
+int getRandomInt() {
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> dis(0, 1);
+	return dis(gen);
+}
+
 int main() {
 
 	glfwInit();
@@ -22,7 +29,7 @@ int main() {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 130");
 
-	auto thread_pool = std::make_shared<ThreadPool>(2);
+	auto thread_pool = std::make_shared<ThreadPool>(4);
 	Game game(thread_pool);
 
 	int slider_object_count = 0;
@@ -54,7 +61,11 @@ int main() {
 		else if (object_count < slider_object_count) {
 			int dif = slider_object_count - object_count;
 			for (auto i = 0; i < dif; i++) {
-				game.AddObject(std::make_unique<Circle>());
+				if (getRandomInt() == 0) {
+					game.AddObject(std::make_unique<Circle>());
+				} else {
+					game.AddObject(std::make_unique<Square>());
+				}
 			}
 			object_count = slider_object_count;
 		}

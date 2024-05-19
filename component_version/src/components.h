@@ -1,5 +1,10 @@
 #pragma once
 #include <random>
+#include <ctime>
+#include <GLFW/glfw3.h>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 struct Component
 {
@@ -7,7 +12,16 @@ struct Component
 };
 
 struct Position : public Component {
-	Position(float ax = 0.0f, float ay = 0.0f) : x(ax), y(ay) {}
+	Position() {
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
+		
+		x = dis(gen);
+		y = dis(gen);
+	}
+
+	Position(float ax, float ay) : x(ax), y(ay) {}
 
 	float x;
 	float y;
@@ -45,4 +59,34 @@ struct Color : public Component {
 	Color(float r = 1.0f, float g = 1.0f, float b = 1.0f, float a = 1.0f) : color(r, g, b, a) {}
 
 	ImVec4 color;
+};
+
+struct Shape : public Component {
+	enum EShape {
+		Circle,
+		Square
+	};
+
+	Shape() {
+		static std::random_device rd;
+		static std::mt19937 gen(rd());
+		static std::uniform_int_distribution<int> distribution(0, 1);
+
+		int randomShape = distribution(gen);
+
+		switch (randomShape) {
+			case 0:
+				shape = EShape::Square;
+				break;
+			case 1:
+				shape = EShape::Circle;
+				break;
+			default:
+				shape = EShape::Square;
+				break;
+		}
+
+	}
+
+	EShape shape;
 };

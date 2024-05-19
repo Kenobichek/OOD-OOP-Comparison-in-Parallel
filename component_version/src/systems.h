@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <cmath> 
+#include <tracy/Tracy.hpp>
 #include "entity_manager.h"
 #include "thread_pool.h"
 #include <GLFW/glfw3.h>
@@ -15,6 +16,7 @@ class MovementSystem {
 
 
 	void Update() {
+		ZoneScopedN("Add task");
 		size_t num_threads = thread_pool->GetThreadCount();
 		int chunk_size = entity_manager->GetObjectCount() / num_threads;
 		int remaining_size = entity_manager->GetObjectCount() % num_threads;
@@ -32,27 +34,30 @@ class MovementSystem {
 			thread_pool->AddTask([=]() {
 				for (auto it = start_it; it != end_it; ++it) {
 					auto& entity = *it;
-					if (!entity) return;
+					if (!entity) {
+						return;
+					}
 
 					auto position = entity->GetComponent<Position>();
-					auto velocity = entity->GetComponent<Velocity>();
 					auto dimension = entity->GetComponent<Dimension>();
-					auto speed = entity->GetComponent<Dimension>();
+					auto velocity = entity->GetComponent<Velocity>();
 
 					if (position && velocity && dimension) {
 						position->x += velocity->dx * velocity->speed;
 						position->y += velocity->dy * velocity->speed;
+					}
 
-						const float width = dimension->width;
-						const float height = dimension->height;
+					if (IsOutOfBounds(entity)) {
+						HandleCollisionWithBounds(entity);
+					}
 
-						if (position->x - width < -1  || position->x + width > 1) {
-							position->x = position->x < 0 ? width - 1 : 1 - width;
-							velocity->dx *= -1;
-						}
-						if (position->y - height < -1 || position->y + height > 1) {
-							position->y = position->y < 0 ? height - 1 : 1 - height;
-							velocity->dy *= -1;
+					for (auto& other_entity : entity_manager->GetEntities()) {
+						if (entity == other_entity || !other_entity) continue;
+						
+						float toi = TimeOfImpact(entity, other_entity);
+    
+						if (toi >= 0.0f && toi <= velocity->speed) {
+							HandleCollision(entity, other_entity);
 						}
 					}
 				}
@@ -65,16 +70,31 @@ class MovementSystem {
 	private:
 		std::shared_ptr<EntityManager> entity_manager;
 		std::shared_ptr<ThreadPool> thread_pool;
+
+		bool IsOutOfBounds(std::unique_ptr<Entity>& entity);
+		void HandleCollisionWithBounds(std::unique_ptr<Entity>& entity);
+		void HandleCollision(std::unique_ptr<Entity>& a_entity, std::unique_ptr<Entity>& b_entity);
+		float TimeOfImpact(std::unique_ptr<Entity>& a_entity, std::unique_ptr<Entity>& b_entity);
 };
 
-class RenderingSystem {
+class CircleRenderingSystem {
 	public:
-		RenderingSystem(std::shared_ptr<EntityManager> manager) : entity_manager(manager) {}
+		CircleRenderingSystem(std::shared_ptr<EntityManager> manager) : entity_manager(manager) {}
 		
 		void Draw() {
 			const int num_segments = 30;
 
 			for (auto& entity : entity_manager->GetEntities()) {
+				if (!entity) return;
+
+				auto shape = entity->GetComponent<Shape>();
+				if (!shape) {
+					return;
+				}
+				if (shape->shape != Shape::EShape::Circle) {
+					continue;
+				}
+
 				auto dimension = entity->GetComponent<Dimension>();
 				
 				if (!dimension) {
@@ -88,10 +108,49 @@ class RenderingSystem {
 				glBegin(GL_TRIANGLE_FAN);
 				for (int i = 0; i < num_segments; ++i) {
 					float angle = 2.0f * M_PI * float(i) / float(num_segments);
-					float dx = dimension->width * cosf(angle);
-					float dy = dimension->height * sinf(angle);
+					float dx = dimension->width / 2 * cosf(angle);
+					float dy = dimension->height / 2 * sinf(angle);
 					glVertex2f(position->x + dx, position->y + dy);
 				}
+				glEnd();
+			}
+		}
+
+	private:
+		std::shared_ptr<EntityManager> entity_manager;
+};
+
+class SquareRenderingSystem {
+	public:
+		SquareRenderingSystem(std::shared_ptr<EntityManager> manager) : entity_manager(manager) {}
+
+		void Draw() {
+			for (auto& entity : entity_manager->GetEntities()) {
+				if (!entity) return;
+
+				auto shape = entity->GetComponent<Shape>();
+				if (!shape) {
+					return;
+				}
+				if (shape->shape != Shape::EShape::Square) {
+					continue;
+				}
+
+				auto dimension = entity->GetComponent<Dimension>();
+				
+				if (!dimension) {
+					return;
+				}
+				auto position = entity->GetComponent<Position>();
+				if (!position) {
+					return;
+				}
+
+				glBegin(GL_QUADS);
+				glVertex2f(position->x - dimension->width / 2, position->y - dimension->height / 2);
+				glVertex2f(position->x + dimension->width / 2, position->y - dimension->height / 2);
+				glVertex2f(position->x + dimension->width / 2, position->y + dimension->height / 2);
+				glVertex2f(position->x - dimension->width / 2, position->y + dimension->height / 2);
 				glEnd();
 			}
 		}
