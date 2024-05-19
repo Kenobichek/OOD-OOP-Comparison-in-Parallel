@@ -46,7 +46,7 @@ class Game {
 						for (auto& other_entity : objects) {
 							if (objects[i] == other_entity || !other_entity) continue;
 							float toi = objects[i]->TimeOfImpact(other_entity);
-							if (toi >= 0.0f && toi <= objects[i]->getSpeed()) {
+							if (toi >= 0.0f && toi <= objects[i]->GetSpeed()) {
 								objects[i]->HandleCollision(other_entity);
 							}
 						}
