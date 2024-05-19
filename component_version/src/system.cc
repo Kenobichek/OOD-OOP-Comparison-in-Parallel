@@ -1,24 +1,5 @@
 #include "systems.h"
 
-bool MovementSystem::CheckCollision(std::unique_ptr<Entity> a_entity, std::unique_ptr<Entity> b_entity) {
-	auto a_position = a_entity->GetComponent<Position>();
-	auto a_velocity = a_entity->GetComponent<Velocity>();
-	auto a_dimension = a_entity->GetComponent<Dimension>();
-
-	auto b_position = b_entity->GetComponent<Position>();
-	auto b_velocity = b_entity->GetComponent<Velocity>();
-	auto b_dimension = b_entity->GetComponent<Dimension>();
-
-	if (!a_position || !a_velocity || !a_dimension || !b_position || !b_velocity || !b_dimension) return false;
-
-	float dx = a_position->x - b_position->x;
-	float dy = a_position->y - b_position->y;
-	float distance = std::sqrt(dx * dx + dy * dy);
-	float radius_sum = (a_dimension->width + b_dimension->width) / 2;
-
-	return distance < radius_sum;
-}
-
 
 float MovementSystem::TimeOfImpact(std::unique_ptr<Entity>& a_entity, std::unique_ptr<Entity>& b_entity) {
 	auto a_position = a_entity->GetComponent<Position>();
@@ -88,12 +69,12 @@ void MovementSystem::HandleCollision(std::unique_ptr<Entity>& a_entity, std::uni
 	float overlap = 0.5f * (distance - a_dimension->width / 2 - b_dimension->width / 2);
 
 	// Displace a_entity
-	// a_position->x -= overlap * (a_position->x - b_position->x) / distance;
-	// a_position->y -= overlap * (a_position->y - b_position->y) / distance;
+	a_position->x -= overlap * (a_position->x - b_position->x) / distance;
+	a_position->y -= overlap * (a_position->y - b_position->y) / distance;
 
-	// // Displace b_entity
-	// b_position->x += overlap * (a_position->x - b_position->x) / distance;
-	// b_position->y += overlap * (a_position->y - b_position->y) / distance;
+	// Displace b_entity
+	b_position->x += overlap * (a_position->x - b_position->x) / distance;
+	b_position->y += overlap * (a_position->y - b_position->y) / distance;
 
 	float collisionAngle = std::atan2(dy, dx);
 	float magnitudeA = std::sqrt(a_velocity->dx * a_velocity->dx + a_velocity->dy * a_velocity->dy);

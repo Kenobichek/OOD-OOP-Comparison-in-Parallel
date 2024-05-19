@@ -71,12 +71,9 @@ class MovementSystem {
 		std::shared_ptr<EntityManager> entity_manager;
 		std::shared_ptr<ThreadPool> thread_pool;
 
-		bool CheckCollision(std::unique_ptr<Entity> a_entity, std::unique_ptr<Entity> b_entity);
 		bool IsOutOfBounds(std::unique_ptr<Entity>& entity);
-
 		void HandleCollisionWithBounds(std::unique_ptr<Entity>& entity);
 		void HandleCollision(std::unique_ptr<Entity>& a_entity, std::unique_ptr<Entity>& b_entity);
-
 		float TimeOfImpact(std::unique_ptr<Entity>& a_entity, std::unique_ptr<Entity>& b_entity);
 };
 
